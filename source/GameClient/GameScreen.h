@@ -2,8 +2,14 @@
 #include <SerraPloEngine\IScreen.h>
 #include <SerraPloEngine\Sprite2D.h>
 #include <SerraPloEngine/Shapes2D.h>
+#include <SerraPloEngine/Text2D.h>
+#include <array>
+#include <map>
 #pragma comment(lib, "SerraPloEngine.lib")
 using namespace SerraPlo;
+
+#define MAX_TEXTURES 3
+enum class GameState { INIT, PLAY };
 
 class AppClient;
 class GameScreen : public IScreen {
@@ -18,8 +24,22 @@ public:
 	void Update(void) override;
 	void Draw(void) override;
 private:
+	void UpdateInit();
+	void DrawInit();
+	void UpdatePlay();
+	void DrawPlay();
+
 	AppClient *m_app; // Casted client main game pointer reference (IApp -> AppClient)
-	Sprite2D m_image;
-	Rectangle m_rectangle;
+	GameState curState;
+	float m_counterUpdate;
+	float m_aliveCounter;
+
+	std::array<std::string, MAX_TEXTURES> textures;
+	Rectangle m_rectangle; // test
+	struct Agent {
+		Text2D nick;
+		Sprite2D sprite;
+	}; std::map<uint64_t, Agent> m_agents;
+	Agent *m_player = nullptr;
 };
 

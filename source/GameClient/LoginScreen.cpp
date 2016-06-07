@@ -11,7 +11,7 @@ void LoginScreen::Build(void) {
 	m_textLogin.position = { m_app->screenWidth/2- m_textLogin.width/2, m_app->screenHeight*0.3f };
 
 	m_textLoading.Load("Waiting for server response...", { 20,150,0 }, m_app->window, m_app->renderer, m_app->font);
-	m_textLoading.width = int(m_app->screenWidth*0.9f);
+	m_textLoading.width = int(m_app->screenWidth*0.8f);
 	m_textLoading.height = int(m_app->screenHeight*0.2f);
 	m_textLoading.position = { m_app->screenWidth / 2 - m_textLoading.width / 2, m_app->screenHeight / 2 - m_textLoading.height / 2 };
 }
@@ -59,6 +59,7 @@ void LoginScreen::Update(void) {
 				case MSG_ACCEPT: { // Set screen to multiplayer when server indicates so
 					std::cout << "Server accepted entry. Waiting for the other players..." << std::endl;
 					m_textLoading.Load("Waiting for players...", { 20,150,0 }, m_app->window, m_app->renderer, m_app->font);
+					m_textLoading.width = int(m_app->screenWidth*0.8f);
 					curState = LoginState::WAIT_CLIENTS;
 				} break;
 				case MSG_REFUSE: { // Leave to main menu if server is disconnected

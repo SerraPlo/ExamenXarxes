@@ -18,7 +18,7 @@ void AppServer::Send(void) {
 	// Update each player connected with the nick and the position of the other players
 	if (clock() > m_counterUpdate + MS_UPDATE_DELAY && clientList.size() == MAX_PLAYERS) {
 		dispatcher << UDPStream::packet << MSG_UPDATE;
-		for (auto &client : clientList) dispatcher << client.second->nick;
+		for (auto &client : clientList) dispatcher << client.first << client.second->position;
 		for (auto &player : clientList) dispatcher << player.second->address;
 		m_counterUpdate = float(clock());
 	}
@@ -39,8 +39,10 @@ void AppServer::Receive(void) {
 						std::cout << nick << " has logged in. Added to client database." << std::endl;
 						dispatcher << UDPStream::packet << MSG_ACCEPT << sender; // Let the new player connected enter the game
 						if (clientList.size() == MAX_PLAYERS) { // Check if race begins
-							dispatcher << UDPStream::packet << MSG_BEGIN << int(clientList.size()); // Send player enemies size
-							for (auto &client : clientList) dispatcher << client.second->nick;
+							dispatcher << UDPStream::packet << MSG_BEGIN;
+							for (auto &player : clientList) dispatcher << player.second->address; 
+							dispatcher << UDPStream::packet << MSG_INIT << int(clientList.size()); // Send player enemies size
+							for (auto &client : clientList) dispatcher << client.first << client.second->nick << client.second->position;
 							for (auto &player : clientList) dispatcher << player.second->address;
 							m_counterUpdate = float(clock());
 							m_aliveCounter = float(clock());
@@ -55,15 +57,7 @@ void AppServer::Receive(void) {
 			case MSG_UPDATE: {
 				int listID;
 				dispatcher >> listID;
-				input10 input;
-				float x[10]; float y[10];
-				dispatcher >> input.w >> input.a >> input.s >> input.d >> x >> y >> input.dt;
-				bool temp[5];
-				for (int i = 0; i < 10; i++) {
-					temp[0] = input.w[i]; temp[1] = input.a[i];
-					temp[2] = input.s[i]; temp[3] = input.d[i];
-					temp[4] = false;
-				}
+				dispatcher >> clientList[sender.hash]->position;
 			}
 		}
 		//for (auto &clientList : clientLists) if (clientList.empty()) std::cout << "All players disconnected." << std::endl;
