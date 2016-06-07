@@ -55,9 +55,18 @@ void AppServer::Receive(void) {
 				clientList.erase(sender.hash);
 			} break;
 			case MSG_UPDATE: {
-				int listID;
-				dispatcher >> listID;
-				dispatcher >> clientList[sender.hash]->position;
+				std::cout << "RECIEVED\n";
+				int listID;  int input;
+				dispatcher >> listID << input;
+				glm::vec2 temp;
+				int w, a, s, d;
+				w = (input) % 10;
+				a = (input / 10) % 10;
+				s = (input / 100) % 10;
+				d = (input / 1000) % 10;
+				temp.x = d - a; temp.y = s - w;
+				//std::cout << input << " -> (" << temp.x << ", " << temp.y << ")\n";
+				clientList[sender.hash]->position += temp;
 			}
 		}
 		//for (auto &clientList : clientLists) if (clientList.empty()) std::cout << "All players disconnected." << std::endl;

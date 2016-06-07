@@ -16,7 +16,7 @@ void GameScreen::Build(void) {
 }
 
 void GameScreen::Destroy(void) {
-	
+
 }
 
 void GameScreen::OnEntry(void) {
@@ -32,68 +32,74 @@ void GameScreen::UpdateInit() {
 	int header;
 	m_app->mainSocket >> UDPStream::packet >> header;
 	switch (header) {
-		case MSG_INIT: {
-			std::cout << "Receiving data for inizialization" << std::endl;
-			int sizeAgents;
-			m_app->mainSocket >> sizeAgents; // Receive number of agents in game
-			int textureID = 0;
-			for (int i = 0; i < sizeAgents; ++i) {
-				uint64_t agentID;
-				m_app->mainSocket >> agentID; // Receive client ID
-				auto &agent = m_agents[agentID]; // Create agent by ID received
-				std::string nickReceived;
-				m_app->mainSocket >> nickReceived;  // Set agent nick
-				if (m_app->nick == nickReceived) m_player = &agent;// Assign player according to nick compare
-				agent.nick.Load(nickReceived, { 255, 255, 255 }, m_app->window, m_app->renderer, m_app->font);
-				agent.nick.position = { 0,0 };
-				agent.nick.width = int(m_app->screenWidth*0.1f);
-				agent.nick.height = int(m_app->screenWidth*0.05f);
-				m_app->mainSocket >> agent.sprite.position; // Init position
-				agent.sprite.LoadImage(textures[textureID++ % MAX_TEXTURES], m_app->window, m_app->renderer);
-				agent.sprite.width = 75;
-				agent.sprite.height = 75;
-			}
-			m_counterUpdate = float(clock());
-			m_aliveCounter = float(clock());
-			curState = GameState::PLAY;
-		} break;
+	case MSG_INIT: {
+		std::cout << "Receiving data for inizialization" << std::endl;
+		int sizeAgents;
+		m_app->mainSocket >> sizeAgents; // Receive number of agents in game
+		int textureID = 0;
+		for (int i = 0; i < sizeAgents; ++i) {
+			uint64_t agentID;
+			m_app->mainSocket >> agentID; // Receive client ID
+			auto &agent = m_agents[agentID]; // Create agent by ID received
+			std::string nickReceived;
+			m_app->mainSocket >> nickReceived;  // Set agent nick
+			if (m_app->nick == nickReceived) m_player = &agent;// Assign player according to nick compare
+			agent.nick.Load(nickReceived, { 255, 255, 255 }, m_app->window, m_app->renderer, m_app->font);
+			agent.nick.position = { 0,0 };
+			agent.nick.width = int(m_app->screenWidth*0.1f);
+			agent.nick.height = int(m_app->screenWidth*0.05f);
+			m_app->mainSocket >> agent.sprite.position; // Init position
+			agent.sprite.LoadImage(textures[textureID++ % MAX_TEXTURES], m_app->window, m_app->renderer);
+			agent.sprite.width = 75;
+			agent.sprite.height = 75;
+		}
+		m_counterUpdate = float(clock());
+		m_aliveCounter = float(clock());
+		curState = GameState::PLAY;
+	} break;
 	}
 }
 
 void GameScreen::UpdatePlay() {
 	// PLAYER UPDATE
-	if (m_app->inputManager.isKeyDown(SDLK_w)) --m_player->sprite.position.y;
-	if (m_app->inputManager.isKeyDown(SDLK_a)) --m_player->sprite.position.x;
-	if (m_app->inputManager.isKeyDown(SDLK_s)) ++m_player->sprite.position.y;
-	if (m_app->inputManager.isKeyDown(SDLK_d)) ++m_player->sprite.position.x;
-
+	static int input; //0001 w - 0010 a - 0100 s - 1000 d + combos
+	static int currI = 0; //9 inputs sencers = 9999
+	if (m_app->inputManager.isKeyDown(SDLK_w)) --m_player->sprite.position.y, input += 1;
+	if (m_app->inputManager.isKeyDown(SDLK_a)) --m_player->sprite.position.x, input += 10;
+	if (m_app->inputManager.isKeyDown(SDLK_s)) ++m_player->sprite.position.y, input += 100;
+	if (m_app->inputManager.isKeyDown(SDLK_d)) ++m_player->sprite.position.x, input += 1000;
+	currI++;
 	// AGENTS UPDATE
 	for (auto &agent : m_agents) { // ALERT: player is an agent
 		agent.second.nick.position = glm::ivec2{ agent.second.sprite.position.x, agent.second.sprite.position.y - 30 }; // Update nick position
 		if (m_player != &agent.second) {
-			/// DO INTERPOLATION
+			agent.second.sprite.position = agent.second.targetPosition;
 		}
-	} 
+	}
+
+	// SEND
+	if (currI == 8) { // Send update info
+		std::cout << "SENMD!" << std::endl;
+		m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input;
+		input = 0;
+		currI = 0;
+	}
 
 	// RECEIVE
 	int header;
 	m_app->mainSocket >> UDPStream::packet >> header;
 	switch (header) {
-		case MSG_UPDATE: { // Check server update
-			for (size_t i = 0; i < m_agents.size(); ++i) {
-				uint64_t idReceived;
-				m_app->mainSocket >> idReceived;
-				//m_app->mainSocket >> m_agents[idReceived].targetPosition; // TEMP: Receive position
-			}
-		} break;
-		case MSG_ALIVE: m_aliveCounter = float(clock()); break; // Check alive
+	case MSG_UPDATE: { // Check server update
+		for (size_t i = 0; i < m_agents.size(); ++i) {
+			uint64_t idReceived;
+			m_app->mainSocket >> idReceived;
+			m_app->mainSocket >> m_agents[idReceived].targetPosition;
+			//std::cout << m_agents[idReceived].targetPosition.x << std::endl;
+		}
+	} break;
+	case MSG_ALIVE: m_aliveCounter = float(clock()); break; // Check alive
 	} if (clock() > m_aliveCounter + MS_ALIVE_DELAY + 1000) std::cout << "Server closed. Disconecting..." << std::endl, m_app->nick.clear(), m_app->ChangeScreen(SCREEN_LOGIN);
 
-	// SEND
-	if (clock() > m_counterUpdate + MS_UPDATE_DELAY) { // Send update info
-		m_app->mainSocket << UDPStream::packet << MSG_UPDATE << m_player->sprite.position;
-		m_counterUpdate = float(clock());
-	}
 }
 
 void GameScreen::Update(void) {
@@ -103,12 +109,14 @@ void GameScreen::Update(void) {
 
 	try {
 		switch (curState) {
-			case GameState::INIT: UpdateInit(); break;
-			case GameState::PLAY: UpdatePlay(); break;
+		case GameState::INIT: UpdateInit(); break;
+		case GameState::PLAY: UpdatePlay(); break;
 		}
-	} catch (UDPStream::wrong) { //if the amount of packet data not corresponding to the amount of data that we are trying to read
+	}
+	catch (UDPStream::wrong) { //if the amount of packet data not corresponding to the amount of data that we are trying to read
 		std::cout << "--> ALERT: Wrongly serialized data received!" << std::endl;
-	} catch (UDPStream::empty) {} //if the package is empty or have not received anything
+	}
+	catch (UDPStream::empty) {} //if the package is empty or have not received anything
 }
 
 void GameScreen::DrawInit() {}
@@ -124,8 +132,8 @@ void GameScreen::DrawPlay() {
 void GameScreen::Draw(void) {
 	SDL_RenderClear(m_app->renderer);
 	switch (curState) {
-		case GameState::INIT: DrawInit(); break;
-		case GameState::PLAY: DrawPlay(); break;
+	case GameState::INIT: DrawInit(); break;
+	case GameState::PLAY: DrawPlay(); break;
 	}
 	SDL_RenderPresent(m_app->renderer);
 }
