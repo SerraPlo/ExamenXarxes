@@ -16,6 +16,7 @@ void AppClient::Init(void) {
 	m_screenList->AddScreen(new LoginScreen, SCREEN_LOGIN);
 	m_screenList->AddScreen(new GameScreen, SCREEN_GAME);
 	currentScreen = m_screenList->SetScreen(SCREEN_LOGIN); // Set to be the first screen
+	system("cls");
 }
 
 void AppClient::ChangeScreen(int index) {

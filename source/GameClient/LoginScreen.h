@@ -9,6 +9,8 @@ using namespace SerraPlo;
 #define TEXT_HEIGHT 100
 #define NICK_MAX_SIZE 10
 
+enum class LoginState { ASK_NICK, WAIT_SERVER, WAIT_CLIENTS };
+
 class AppClient;
 class LoginScreen : public IScreen {
 public:
@@ -22,6 +24,7 @@ public:
 	void Draw(void) override;
 private:
 	AppClient *m_app; // Casted client main game pointer reference (IApp -> AppClient)
+	LoginState curState;
 	float m_counterSend{ 0 };
 	std::string m_inputText{ "" };
 	// Text to show on screen

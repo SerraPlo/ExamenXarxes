@@ -20,6 +20,7 @@ void GameScreen::Destroy(void) {
 }
 
 void GameScreen::OnEntry(void) {
+
 }
 
 void GameScreen::OnExit(void) {

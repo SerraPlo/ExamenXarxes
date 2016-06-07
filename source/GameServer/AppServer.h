@@ -5,8 +5,7 @@
 #pragma comment(lib, "SerraPloEngine.lib")
 
 #define SERVER_PORT 5000
-#define MAX_PARTY_PLAYERS 4
-#define MAX_PARTIES 3
+#define MAX_PLAYERS 2
 
 class AppServer : public IApp {
 	UDPStream dispatcher;

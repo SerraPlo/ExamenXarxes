@@ -9,14 +9,14 @@ void AppServer::Init(void) {
 
 void AppServer::Send(void) {
 	// Alive counter to tell player that the server is working
-	if (clock() > m_aliveCounter + MS_ALIVE_DELAY && clientList.size() == MAX_PARTY_PLAYERS) {
+	if (clock() > m_aliveCounter + MS_ALIVE_DELAY && clientList.size() == MAX_PLAYERS) {
 		//std::cout << "Sending alive..." << std::endl;
 		dispatcher << UDPStream::packet << MSG_ALIVE;
 		for (auto &client : clientList) dispatcher << client.second->address;
 		m_aliveCounter = float(clock());
 	}
 	// Update each player connected with the nick and the position of the other players
-	if (clock() > m_counterUpdate + MS_UPDATE_DELAY && clientList.size() == MAX_PARTY_PLAYERS) {
+	if (clock() > m_counterUpdate + MS_UPDATE_DELAY && clientList.size() == MAX_PLAYERS) {
 		dispatcher << UDPStream::packet << MSG_UPDATE;
 		for (auto &client : clientList) dispatcher << client.second->nick;
 		for (auto &player : clientList) dispatcher << player.second->address;
@@ -33,12 +33,12 @@ void AppServer::Receive(void) {
 			case MSG_LOGIN: {
 				std::string nick;
 				dispatcher >> nick; // Receive client nick and store it
-				if (clientList.size() != MAX_PARTY_PLAYERS) {
+				if (clientList.size() != MAX_PLAYERS) {
 					if (clientList.find(sender.hash) == clientList.end()) { // Check if player exists in client list
 						clientList[sender.hash] = new ClientProxy(sender, nick, clientList.size()); ///TODO: new placement constructor
 						std::cout << nick << " has logged in. Added to client database." << std::endl;
 						dispatcher << UDPStream::packet << MSG_ACCEPT << sender; // Let the new player connected enter the game
-						if (clientList.size() == MAX_PARTY_PLAYERS) { // Check if race begins
+						if (clientList.size() == MAX_PLAYERS) { // Check if race begins
 							dispatcher << UDPStream::packet << MSG_BEGIN << int(clientList.size()); // Send player enemies size
 							for (auto &client : clientList) dispatcher << client.second->nick;
 							for (auto &player : clientList) dispatcher << player.second->address;
