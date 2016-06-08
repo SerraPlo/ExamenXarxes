@@ -5,7 +5,7 @@
 void GameScreen::Build(void) {
 	m_app = dynamic_cast<AppClient*>(gameApp);
 
-	textures = { "images/solete.png", "images/roco.png" , "images/fogo.png" };
+	textures = { "images/solete.png", "images/roco.png" , "images/fogo.png","images/troll.png" };
 
 	m_rectangle.position = { 250, 250 };
 	m_rectangle.width = 300;
@@ -76,6 +76,8 @@ bool GameScreen::CheckColisions() {
 }
 
 void GameScreen::UpdatePlay() {
+	if (m_app->inputManager.isKeyPressed(SDLK_r)) debugC = !debugC;
+
 	// PLAYER UPDATE
 	static int input; //0001 w - 0010 a - 0100 s - 1000 d + combos
 	static int currI = 0; //9 inputs sencers = 9999
@@ -85,24 +87,27 @@ void GameScreen::UpdatePlay() {
 	if (m_app->inputManager.isKeyDown(SDLK_a)) --m_player->sprite.position.x, input += 10;
 	if (m_app->inputManager.isKeyDown(SDLK_s)) ++m_player->sprite.position.y, input += 100;
 	if (m_app->inputManager.isKeyDown(SDLK_d)) ++m_player->sprite.position.x, input += 1000;
-	if (CheckColisions()) m_player->sprite.position = prevPos, input = prevInput;
-	if (prevInput != input) currI++;
+	if (CheckColisions()&&!debugC) m_player->sprite.position = prevPos, input = prevInput;
+	currI++;
 
 	// AGENTS UPDATE
 	for (auto &agent : m_agents) { // ALERT: player is an agent
 		agent.second.nick.position = glm::ivec2{ agent.second.sprite.position.x, agent.second.sprite.position.y - 30 }; // Update nick position
-		if (m_player != &agent.second/* && agent.second.sprite.position != agent.second.targetPosition*/) {
+		if (m_player != &agent.second) {//others
 			if (agent.second.lerpCounter > clock()) {
 				float percent = 1 - (agent.second.lerpCounter - clock()) / 200;
 				agent.second.sprite.position.x = agent.second.lastPosition.x + percent*(agent.second.targetPosition.x - agent.second.lastPosition.x);
 				agent.second.sprite.position.y = agent.second.lastPosition.y + percent*(agent.second.targetPosition.y - agent.second.lastPosition.y);
 			}
+		}else {//correction
+			if (abs(agent.second.targetPosition.x - agent.second.sprite.position.x) >= 35 ||
+				abs(agent.second.targetPosition.y - agent.second.sprite.position.y) >= 35)  agent.second.sprite.position = agent.second.targetPosition;
 		}
 	}
 
 	// SEND
 	if (currI == 8) { // Send update info
-		if (input) m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input << m_app->serverAddress;
+		if (input && input!=8888) m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input << m_app->serverAddress;
 		input = 0; currI = 0;
 	}
 

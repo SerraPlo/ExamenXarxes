@@ -1,11 +1,12 @@
 #pragma once
 #include <SerraPloEngine/IApp.h>
+#include <SerraPloEngine/Shapes2D.h>
 #include "ClientProxy.h"
 #include <map>
 #pragma comment(lib, "SerraPloEngine.lib")
 
 #define SERVER_PORT 5000
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
 
 class AppServer : public IApp {
 	UDPStream dispatcher;
@@ -22,7 +23,8 @@ class AppServer : public IApp {
 	virtual void Init(void) override;
 	void Send(void);
 	void Receive(void);
-	
+	bool CheckColisions(glm::vec2 pos);
+	Rectangle m_rectangle;
 public:
 	static AppServer& Instance() {
 		static AppServer instance;

@@ -5,6 +5,9 @@
 void AppServer::Init(void) {
 	m_aliveCounter = float(clock());
 	m_counterUpdate = float(clock());
+	m_rectangle.position = { 250, 250 };
+	m_rectangle.width = 300;
+	m_rectangle.height = 100;
 }
 
 void AppServer::Send(void) {
@@ -22,6 +25,16 @@ void AppServer::Send(void) {
 		for (auto &player : clientList) dispatcher << player.second->address;
 		m_counterUpdate = float(clock());
 	}
+}
+bool AppServer::CheckColisions(glm::vec2 pos) {//widths and heights hardcoded!!!!! 
+	// LIMITS COLISIONS
+	if (pos.y < 0 || pos.x < 0 || pos.y + 75 > 450 || pos.x + 75 > 600) return true;
+	// RECTANGLE COLISIONS
+	if (pos.x + 75 > m_rectangle.position.x &&
+		pos.y + 75 > m_rectangle.position.y &&
+		pos.x < m_rectangle.position.x + m_rectangle.width &&
+		pos.y < m_rectangle.position.y + m_rectangle.height) return true;
+	return false;
 }
 
 void AppServer::Receive(void) {
@@ -55,7 +68,6 @@ void AppServer::Receive(void) {
 				clientList.erase(sender.hash);
 			} break;
 			case MSG_UPDATE: {
-				std::cout << "RECIEVED\n";
 				int input;
 				dispatcher >> input;
 				glm::ivec2 temp;
@@ -65,9 +77,9 @@ void AppServer::Receive(void) {
 				s = (input / 100) % 10;
 				d = (input / 1000) % 10;
 				temp.x = d - a; temp.y = s - w;
+				if(!CheckColisions(clientList[sender.hash]->position + temp)) clientList[sender.hash]->position += temp;
 				//printf("w: %d, a: %d, s: %d, d: %d \n", w, a, s, d);
-				std::cout << input << " -> (" << temp.x << ", " << temp.y << ")\n";
-				clientList[sender.hash]->position += temp;
+				//std::cout << input << " -> (" << temp.x << ", " << temp.y << ")\n";
 			} break;
 		}
 		//for (auto &clientList : clientLists) if (clientList.empty()) std::cout << "All players disconnected." << std::endl;

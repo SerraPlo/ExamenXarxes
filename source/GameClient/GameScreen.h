@@ -8,7 +8,7 @@
 #pragma comment(lib, "SerraPloEngine.lib")
 using namespace SerraPlo;
 
-#define MAX_TEXTURES 3
+#define MAX_TEXTURES 4
 enum class GameState { INIT, PLAY };
 
 class AppClient;
@@ -24,6 +24,7 @@ public:
 	void Update(void) override;
 	void Draw(void) override;
 private:
+	bool debugC = false;
 	bool CheckColisions();
 	void UpdateInit();
 	void DrawInit();
