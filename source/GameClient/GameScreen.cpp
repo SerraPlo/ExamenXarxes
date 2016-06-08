@@ -48,10 +48,11 @@ void GameScreen::UpdateInit() {
 			agent.nick.position = { 0,0 };
 			agent.nick.width = int(m_app->screenWidth*0.1f);
 			agent.nick.height = int(m_app->screenWidth*0.05f);
-			m_app->mainSocket >> agent.sprite.position; // Init position
 			agent.sprite.LoadImage(textures[textureID++ % MAX_TEXTURES], m_app->window, m_app->renderer);
 			agent.sprite.width = 75;
 			agent.sprite.height = 75;
+			m_app->mainSocket >> agent.sprite.position; // Init position
+			agent.targetPosition = agent.sprite.position;
 		}
 		m_counterUpdate = float(clock());
 		m_aliveCounter = float(clock());
@@ -60,27 +61,44 @@ void GameScreen::UpdateInit() {
 	}
 }
 
+bool GameScreen::CheckColisions() {
+	// LIMITS COLISIONS
+	if (m_player->sprite.position.y < 0 ||
+		m_player->sprite.position.x < 0 ||
+		m_player->sprite.position.y + m_player->sprite.height > m_app->screenHeight ||
+		m_player->sprite.position.x + m_player->sprite.width > m_app->screenWidth) return true;
+	// RECTANGLE COLISIONS
+	if (m_player->sprite.position.x + m_player->sprite.width > m_rectangle.position.x &&
+		m_player->sprite.position.y + m_player->sprite.height > m_rectangle.position.y &&
+		m_player->sprite.position.x < m_rectangle.position.x + m_rectangle.width &&
+		m_player->sprite.position.y < m_rectangle.position.y + m_rectangle.height) return true;
+	return false;
+}
+
 void GameScreen::UpdatePlay() {
 	// PLAYER UPDATE
 	static int input; //0001 w - 0010 a - 0100 s - 1000 d + combos
 	static int currI = 0; //9 inputs sencers = 9999
+	int prevInput = input;
+	glm::ivec2 prevPos = m_player->sprite.position;
 	if (m_app->inputManager.isKeyDown(SDLK_w)) --m_player->sprite.position.y, input += 1;
 	if (m_app->inputManager.isKeyDown(SDLK_a)) --m_player->sprite.position.x, input += 10;
 	if (m_app->inputManager.isKeyDown(SDLK_s)) ++m_player->sprite.position.y, input += 100;
 	if (m_app->inputManager.isKeyDown(SDLK_d)) ++m_player->sprite.position.x, input += 1000;
-	currI++;
+	if (CheckColisions()) m_player->sprite.position = prevPos, input = prevInput;
+	if (prevInput != input) currI++;
 
 	// AGENTS UPDATE
 	for (auto &agent : m_agents) { // ALERT: player is an agent
 		agent.second.nick.position = glm::ivec2{ agent.second.sprite.position.x, agent.second.sprite.position.y - 30 }; // Update nick position
 		if (m_player != &agent.second) {
-			agent.second.sprite.position = agent.second.sprite.position + (agent.second.targetPosition- agent.second.sprite.position)/3;
+			if (agent.second.sprite.position != agent.second.targetPosition) agent.second.sprite.position = agent.second.sprite.position + (agent.second.targetPosition- agent.second.sprite.position)/5;
 		}
 	}
 
 	// SEND
 	if (currI == 8) { // Send update info
-		if(input!=0) m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input << m_app->serverAddress;
+		if (input) m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input << m_app->serverAddress;
 		input = 0; currI = 0;
 	}
 
@@ -93,12 +111,11 @@ void GameScreen::UpdatePlay() {
 			uint64_t idReceived;
 			m_app->mainSocket >> idReceived;
 			m_app->mainSocket >> m_agents[idReceived].targetPosition;
-			std::cout << m_agents[idReceived].targetPosition.x << std::endl;
 		}
 	} break;
-	case MSG_ALIVE: m_aliveCounter = float(clock()); break; // Check alive
+	//case MSG_ALIVE: m_aliveCounter = float(clock()); break; // Check alive
 	} 
-	if (clock() > m_aliveCounter + MS_ALIVE_DELAY + 1000) std::cout << "Server closed. Disconecting..." << std::endl, m_app->nick.clear(), m_app->ChangeScreen(SCREEN_LOGIN);
+	//if (clock() > m_aliveCounter + MS_ALIVE_DELAY + 1000) std::cout << "Server closed. Disconecting..." << std::endl, m_app->nick.clear(), m_app->ChangeScreen(SCREEN_LOGIN);
 }
 
 void GameScreen::Update(void) {

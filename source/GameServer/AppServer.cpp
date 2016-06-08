@@ -9,12 +9,12 @@ void AppServer::Init(void) {
 
 void AppServer::Send(void) {
 	// Alive counter to tell player that the server is working
-	if (clock() > m_aliveCounter + MS_ALIVE_DELAY && clientList.size() == MAX_PLAYERS) {
+	/*if (clock() > m_aliveCounter + MS_ALIVE_DELAY && clientList.size() == MAX_PLAYERS) {
 		//std::cout << "Sending alive..." << std::endl;
 		dispatcher << UDPStream::packet << MSG_ALIVE;
 		for (auto &client : clientList) dispatcher << client.second->address;
 		m_aliveCounter = float(clock());
-	}
+	}*/
 	// Update each player connected with the nick and the position of the other players
 	if (clock() > m_counterUpdate + MS_UPDATE_DELAY && clientList.size() == MAX_PLAYERS) {
 		dispatcher << UDPStream::packet << MSG_UPDATE;

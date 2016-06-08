@@ -24,6 +24,7 @@ public:
 	void Update(void) override;
 	void Draw(void) override;
 private:
+	bool CheckColisions();
 	void UpdateInit();
 	void DrawInit();
 	void UpdatePlay();
@@ -40,6 +41,7 @@ private:
 		Text2D nick;
 		Sprite2D sprite;
 		glm::ivec2 targetPosition;
+		float lerpCounter = 0.0f;
 	}; std::map<uint64_t, Agent> m_agents;
 	Agent *m_player = nullptr;
 };
