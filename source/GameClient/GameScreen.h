@@ -39,7 +39,7 @@ private:
 	struct Agent {
 		Text2D nick;
 		Sprite2D sprite;
-		glm::vec2 targetPosition;
+		glm::ivec2 targetPosition;
 	}; std::map<uint64_t, Agent> m_agents;
 	Agent *m_player = nullptr;
 };

@@ -69,6 +69,7 @@ void GameScreen::UpdatePlay() {
 	if (m_app->inputManager.isKeyDown(SDLK_s)) ++m_player->sprite.position.y, input += 100;
 	if (m_app->inputManager.isKeyDown(SDLK_d)) ++m_player->sprite.position.x, input += 1000;
 	currI++;
+
 	// AGENTS UPDATE
 	for (auto &agent : m_agents) { // ALERT: player is an agent
 		agent.second.nick.position = glm::ivec2{ agent.second.sprite.position.x, agent.second.sprite.position.y - 30 }; // Update nick position
@@ -78,11 +79,9 @@ void GameScreen::UpdatePlay() {
 	}
 
 	// SEND
-	if (currI == 8) { // Send update info
-		std::cout << "SENMD!" << std::endl;
-		m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input;
-		input = 0;
-		currI = 0;
+	if (currI == 80) { // Send update info
+		m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input << m_app->serverAddress;
+		input = 0; currI = 0;
 	}
 
 	// RECEIVE
@@ -94,12 +93,12 @@ void GameScreen::UpdatePlay() {
 			uint64_t idReceived;
 			m_app->mainSocket >> idReceived;
 			m_app->mainSocket >> m_agents[idReceived].targetPosition;
-			//std::cout << m_agents[idReceived].targetPosition.x << std::endl;
+			std::cout << m_agents[idReceived].targetPosition.x << std::endl;
 		}
 	} break;
 	case MSG_ALIVE: m_aliveCounter = float(clock()); break; // Check alive
-	} if (clock() > m_aliveCounter + MS_ALIVE_DELAY + 1000) std::cout << "Server closed. Disconecting..." << std::endl, m_app->nick.clear(), m_app->ChangeScreen(SCREEN_LOGIN);
-
+	} 
+	if (clock() > m_aliveCounter + MS_ALIVE_DELAY + 1000) std::cout << "Server closed. Disconecting..." << std::endl, m_app->nick.clear(), m_app->ChangeScreen(SCREEN_LOGIN);
 }
 
 void GameScreen::Update(void) {
@@ -115,8 +114,7 @@ void GameScreen::Update(void) {
 	}
 	catch (UDPStream::wrong) { //if the amount of packet data not corresponding to the amount of data that we are trying to read
 		std::cout << "--> ALERT: Wrongly serialized data received!" << std::endl;
-	}
-	catch (UDPStream::empty) {} //if the package is empty or have not received anything
+	} catch (UDPStream::empty) {} //if the package is empty or have not received anything
 }
 
 void GameScreen::DrawInit() {}

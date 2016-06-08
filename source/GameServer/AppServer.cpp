@@ -56,18 +56,18 @@ void AppServer::Receive(void) {
 			} break;
 			case MSG_UPDATE: {
 				std::cout << "RECIEVED\n";
-				int listID;  int input;
-				dispatcher >> listID << input;
-				glm::vec2 temp;
+				int input;
+				dispatcher >> input;
+				glm::ivec2 temp;
 				int w, a, s, d;
 				w = (input) % 10;
 				a = (input / 10) % 10;
 				s = (input / 100) % 10;
 				d = (input / 1000) % 10;
 				temp.x = d - a; temp.y = s - w;
-				//std::cout << input << " -> (" << temp.x << ", " << temp.y << ")\n";
+				std::cout << input << " -> (" << temp.x << ", " << temp.y << ")\n";
 				clientList[sender.hash]->position += temp;
-			}
+			} break;
 		}
 		//for (auto &clientList : clientLists) if (clientList.empty()) std::cout << "All players disconnected." << std::endl;
 	} catch (UDPStream::wrong) { //if the amount of packet data not corresponding to the amount of data that we are trying to read
