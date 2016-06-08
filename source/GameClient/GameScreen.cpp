@@ -79,7 +79,7 @@ void GameScreen::UpdatePlay() {
 	}
 
 	// SEND
-	if (currI == 80) { // Send update info
+	if (currI == 8) { // Send update info
 		m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input << m_app->serverAddress;
 		input = 0; currI = 0;
 	}

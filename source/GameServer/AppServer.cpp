@@ -65,6 +65,7 @@ void AppServer::Receive(void) {
 				s = (input / 100) % 10;
 				d = (input / 1000) % 10;
 				temp.x = d - a; temp.y = s - w;
+				//printf("w: %d, a: %d, s: %d, d: %d \n", w, a, s, d);
 				std::cout << input << " -> (" << temp.x << ", " << temp.y << ")\n";
 				clientList[sender.hash]->position += temp;
 			} break;
