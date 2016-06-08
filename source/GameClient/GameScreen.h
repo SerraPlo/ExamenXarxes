@@ -40,6 +40,7 @@ private:
 	struct Agent {
 		Text2D nick;
 		Sprite2D sprite;
+		glm::ivec2 lastPosition;
 		glm::ivec2 targetPosition;
 		float lerpCounter = 0.0f;
 	}; std::map<uint64_t, Agent> m_agents;

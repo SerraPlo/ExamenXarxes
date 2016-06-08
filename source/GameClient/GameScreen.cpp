@@ -91,8 +91,12 @@ void GameScreen::UpdatePlay() {
 	// AGENTS UPDATE
 	for (auto &agent : m_agents) { // ALERT: player is an agent
 		agent.second.nick.position = glm::ivec2{ agent.second.sprite.position.x, agent.second.sprite.position.y - 30 }; // Update nick position
-		if (m_player != &agent.second) {
-			if (agent.second.sprite.position != agent.second.targetPosition) agent.second.sprite.position = agent.second.sprite.position + (agent.second.targetPosition- agent.second.sprite.position)/5;
+		if (m_player != &agent.second/* && agent.second.sprite.position != agent.second.targetPosition*/) {
+			if (agent.second.lerpCounter > clock()) {
+				float percent = 1 - (agent.second.lerpCounter - clock()) / 200;
+				agent.second.sprite.position.x = agent.second.lastPosition.x + percent*(agent.second.targetPosition.x - agent.second.lastPosition.x);
+				agent.second.sprite.position.y = agent.second.lastPosition.y + percent*(agent.second.targetPosition.y - agent.second.lastPosition.y);
+			}
 		}
 	}
 
@@ -111,6 +115,8 @@ void GameScreen::UpdatePlay() {
 			uint64_t idReceived;
 			m_app->mainSocket >> idReceived;
 			m_app->mainSocket >> m_agents[idReceived].targetPosition;
+			m_agents[idReceived].lastPosition = m_agents[idReceived].sprite.position;
+			m_agents[idReceived].lerpCounter = clock() + 200;
 		}
 	} break;
 	//case MSG_ALIVE: m_aliveCounter = float(clock()); break; // Check alive
