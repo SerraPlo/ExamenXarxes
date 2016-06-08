@@ -74,13 +74,13 @@ void GameScreen::UpdatePlay() {
 	for (auto &agent : m_agents) { // ALERT: player is an agent
 		agent.second.nick.position = glm::ivec2{ agent.second.sprite.position.x, agent.second.sprite.position.y - 30 }; // Update nick position
 		if (m_player != &agent.second) {
-			agent.second.sprite.position = agent.second.targetPosition;
+			agent.second.sprite.position = agent.second.sprite.position + (agent.second.targetPosition- agent.second.sprite.position)/3;
 		}
 	}
 
 	// SEND
 	if (currI == 8) { // Send update info
-		m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input << m_app->serverAddress;
+		if(input!=0) m_app->mainSocket << UDPStream::packet << MSG_UPDATE << input << m_app->serverAddress;
 		input = 0; currI = 0;
 	}
 
